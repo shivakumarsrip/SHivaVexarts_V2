@@ -1,0 +1,161 @@
+import { useState, useMemo } from "react";
+import { trpc } from "@/providers/trpc";
+import { COLLECTIONS, COLLECTION_METADATA } from "@/lib/constants";
+import ArtworkCard from "@/components/ArtworkCard";
+import { Loader2 } from "lucide-react";
+
+interface DynamicCollection {
+  id: string;
+  label: string;
+  title: string;
+  description: string;
+  filters: string[];
+}
+
+function GalleryChapter({
+  collection,
+  isLast,
+}: {
+  collection: { id: string; title: string; description: string; filters: string[] };
+  isLast: boolean;
+}) {
+  const [activeFilter, setActiveFilter] = useState("All");
+  const { data, isLoading } = trpc.artwork.list.useQuery({
+    collection: collection.id,
+    category: activeFilter === "All" ? undefined : activeFilter,
+    limit: 50
+  }, {
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  const filteredArtworks = data?.items || [];
+  const hasArtworks = (filteredArtworks && filteredArtworks.length > 0);
+
+  if (!isLoading && !hasArtworks) {
+    return null;
+  }
+
+  return (
+    <div 
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}
+      className={`${isLast ? "" : "mb-24 md:mb-36"} animate-in fade-in slide-in-from-bottom-6 duration-1000 ease-out`}
+    >
+      <div className="mb-12 md:mb-16">
+        <span className="font-body text-[12px] sm:text-[14px] font-bold text-[#F59E0B] tracking-[0.25em] uppercase">
+          {collection.label}
+        </span>
+        <h2 className="font-display text-[42px] sm:text-[56px] md:text-[64px] text-white uppercase mt-3 leading-[0.9]">
+          {collection.title}
+        </h2>
+        <p className="font-body text-[15px] sm:text-[16px] text-[#A1A1AA] mt-5 max-w-[640px] leading-relaxed opacity-80">
+          {collection.description}
+        </p>
+
+        <div className="flex flex-wrap gap-2.5 mt-8">
+          {collection.filters.map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-5 py-2 rounded-full font-body text-[11px] sm:text-[12px] font-bold uppercase tracking-wider transition-all duration-300 ${
+                activeFilter === filter
+                  ? "bg-[#F59E0B] text-[#09090B] shadow-[0_0_20px_rgba(245,158,11,0.3)]"
+                  : "bg-[#18181B] text-[#71717A] border border-[#27272A] hover:border-[#3f3f46] hover:text-white"
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={32} className="text-[#F59E0B] animate-spin" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+          {filteredArtworks?.map((artwork: any) => (
+            <ArtworkCard key={artwork.id} artwork={artwork} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function GallerySection() {
+  const { data, isLoading, error } = trpc.artwork.list.useQuery({ limit: 500 });
+  const allArtworks = data?.items;
+
+  const dynamicCollections = useMemo(() => {
+    if (!allArtworks) return [];
+
+    // Group artworks by collection
+    const groups: Record<string, any[]> = {};
+    allArtworks.forEach((art: any) => {
+      const colId = art.collection || 'Uncategorized';
+      if (!groups[colId]) groups[colId] = [];
+      groups[colId].push(art);
+    });
+
+    // Transform into DynamicCollection format
+    return Object.entries(groups).map(([colId, arts], index) => {
+      const meta = COLLECTION_METADATA[colId];
+      const uniqueFilters = ["All", ...new Set(arts.map(a => a.category))].sort();
+
+      return {
+        id: colId,
+        label: `COLLECTION ${String(index + 1).padStart(2, '0')}`,
+        title: meta?.title || colId.replace(/_/g, " ").toUpperCase(),
+        description: meta?.description || `Explore our unique collection of ${colId.replace(/_/g, " ")} digital art.`,
+        filters: uniqueFilters as string[]
+      };
+    });
+  }, [allArtworks]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#09090B] flex items-center justify-center">
+        <Loader2 size={48} className="text-[#F59E0B] animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[400px] bg-[#09090B] flex flex-col items-center justify-center text-center px-4">
+        <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
+          <span className="text-red-500 text-2xl font-bold">!</span>
+        </div>
+        <h3 className="text-white text-2xl font-display uppercase mb-2">Gallery Load Failed</h3>
+        <p className="text-[#A1A1AA] font-body max-w-md">
+          We encountered an issue connecting to the artwork database. 
+          Please verify your connection and try again.
+        </p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-8 px-6 py-3 bg-white/5 border border-white/10 text-white font-bold uppercase text-xs tracking-widest hover:bg-white/10 transition-colors"
+        >
+          Retry Connection
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <section id="gallery" className="relative py-24 md:py-40 bg-[#09090B]">
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#F59E0B]/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-[#F59E0B]/3 blur-[150px] rounded-full pointer-events-none" />
+      
+      <div className="container-vex relative z-10">
+        {dynamicCollections.map((collection, index) => (
+          <GalleryChapter
+            key={collection.id}
+            collection={collection}
+            isLast={index === dynamicCollections.length - 1}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}

@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --black: #09090B;
+    --white: #FFFFFF;
+    --amber: #F59E0B;
+    --amber-deep: #D97706;
+    --amber-muted: rgba(245, 158, 11, 0.15);
+    --gray-100: #F5F5F5;
+    --gray-400: #A1A1AA;
+    --gray-600: #52525B;
+    --gray-800: #27272A;
+    --gray-900: #18181B;
+    --red-accent: #DC2626;
+    --green-accent: #16A34A;
+    --container-max: 1440px;
+    --container-pad: 24px;
+    --section-gap: 120px;
+    --card-gap: 24px;
+    --nav-height: 56px;
+
+    --background: 240 6% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 6% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 6% 6%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 38 92% 50%;
+    --primary-foreground: 240 6% 4%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 38 92% 50%;
+    --radius: 0.8rem;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: var(--black);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+  }
+
+  html::-webkit-scrollbar {
+    display: none;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.02em;
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: 'Bebas Neue', sans-serif;
+  }
+
+  .font-body {
+    font-family: 'Inter', sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .text-amber {
+    color: var(--amber);
+  }
+
+  .bg-amber {
+    background-color: var(--amber);
+  }
+
+  .border-amber {
+    border-color: var(--amber);
+  }
+
+  .container-vex {
+    max-width: var(--container-max);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--container-pad);
+    padding-right: var(--container-pad);
+  }
+
+  .glass-dark {
+    @apply bg-black/30 backdrop-blur-xl border border-white/5;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/60;
+  }
+}
