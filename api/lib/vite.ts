@@ -6,10 +6,29 @@ import path from "path";
 
 type App = Hono<{ Bindings: HttpBindings }>;
 
+const staticContentTypes: Record<string, string> = {
+  ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".wasm": "application/wasm",
+};
+
 export function serveStaticFiles(app: App) {
   const distPath = path.resolve(import.meta.dirname, "../dist/public");
 
-  app.use("*", serveStatic({ root: "./dist/public" }));
+  app.use(
+    "*",
+    serveStatic({
+      root: "./dist/public",
+      onFound: (filePath, c) => {
+        const contentType = staticContentTypes[path.extname(filePath)];
+        if (contentType) {
+          c.header("Content-Type", contentType);
+        }
+      },
+    }),
+  );
 
   app.notFound((c) => {
     const accept = c.req.header("accept") ?? "";
