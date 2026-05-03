@@ -46,6 +46,26 @@ const statusColors = {
 } as const;
 type OrderStatus = keyof typeof statusColors;
 
+const DEFAULT_SETTINGS = {
+  about: {
+    name: "Shivakumar S",
+    occupation: "Digital Artist & Movie Publicity Designer",
+    bio: "Digital artist and movie publicity designer based in Hyderabad, India. With over a decade of experience in the advertising, television, and film industry, I create visual narratives that command attention.\n\nFrom gritty movie posters for Telugu cinema to social awareness campaigns, every piece is crafted with cinematic intensity and digital precision. My work has garnered over 387,000 views and 14,000+ appreciations across platforms.\n\nAvailable for commissions — movie posters, album art, social media campaigns, and custom digital illustrations.",
+    tools: ["Adobe Photoshop", "Illustrator", "After Effects"],
+    image: null
+  },
+  experience: [
+    { year: "Present", title: "Puthiya Thalaimurai TV", company: "Digital Artist & VFX Artist" },
+    { year: "Previous", title: "Ocher Studios", company: "Digital Matte Artist" },
+    { year: "Ongoing", title: "Freelance", company: "Movie Publicity Designer" }
+  ],
+  socials: {
+    instagram: "https://www.instagram.com/shiva_vexarts",
+    behance: "https://www.behance.net/Sivadigitalart",
+    location: "Hyderabad, Telangana, India"
+  }
+};
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
@@ -64,7 +84,7 @@ export default function AdminDashboard() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("inventory");
-  const [settingsForm, setSettingsForm] = useState<any>({});
+  const [settingsForm, setSettingsForm] = useState<any>(DEFAULT_SETTINGS);
 
   // Upload state
   const [uploading, setUploading] = useState(false);
@@ -95,7 +115,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (settingsData) {
-      setSettingsForm(settingsData);
+      setSettingsForm({
+        ...DEFAULT_SETTINGS,
+        ...settingsData,
+        about: { ...DEFAULT_SETTINGS.about, ...(settingsData.about || {}) },
+        socials: { ...DEFAULT_SETTINGS.socials, ...(settingsData.socials || {}) },
+        experience: settingsData.experience || DEFAULT_SETTINGS.experience
+      });
     }
   }, [settingsData]);
 
