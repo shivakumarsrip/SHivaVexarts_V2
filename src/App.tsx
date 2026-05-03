@@ -11,10 +11,12 @@ import Login from "./pages/Login";
 import AIChat from "./pages/AIChat";
 import NotFound from "./pages/NotFound";
 import { CartProvider } from "./hooks/useCart";
+import { Toaster } from "sonner";
 
 export default function App() {
   return (
     <CartProvider>
+      <Toaster richColors position="top-right" theme="dark" />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route

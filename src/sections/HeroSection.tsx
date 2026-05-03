@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin, Instagram, ChevronDown } from "lucide-react";
+import { trpc } from "@/providers/trpc";
 
 const VERTEX_SHADER = `
 attribute vec2 a_pos;
@@ -148,6 +149,7 @@ void main() {
 export default function HeroSection() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
+  const { data: settings } = trpc.settings.getAll.useQuery();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -248,6 +250,15 @@ export default function HeroSection() {
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
 
+  const about = settings?.about || {
+    name: "SHIVAKUMAR S",
+    occupation: "Vector Artist & Movie Publicity Designer",
+  };
+  const socials = settings?.socials || {
+    instagram: "https://www.instagram.com/shiva_vexarts",
+    location: "Hyderabad, India",
+  };
+
   return (
     <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
       {/* WebGL Canvas */}
@@ -260,16 +271,16 @@ export default function HeroSection() {
       {/* Content */}
       <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
         <h1 className="font-display text-[40px] sm:text-[56px] md:text-[72px] text-white uppercase tracking-[0.05em] leading-none mb-4">
-          SHIVAKUMAR S
+          {about.name}
         </h1>
         <p className="font-body text-[16px] sm:text-[18px] text-[#A1A1AA] mb-4">
-          Vector Artist &amp; Movie Publicity Designer
+          {about.occupation}
         </p>
 
         <div className="inline-flex items-center gap-1.5 px-4 py-1.5 border border-[#F59E0B] rounded-full mb-8">
           <MapPin size={14} className="text-[#F59E0B]" />
           <span className="font-body text-[13px] font-medium text-[#F59E0B]">
-            Hyderabad, India
+            {socials.location}
           </span>
         </div>
 
@@ -282,7 +293,7 @@ export default function HeroSection() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => window.open("https://www.instagram.com/shiva_vexarts", "_blank")}
+            onClick={() => window.open(socials.instagram, "_blank")}
             className="bg-transparent text-white border-white hover:bg-white hover:text-[#09090B] font-body font-semibold rounded-lg px-6 py-3 text-[14px]"
           >
             <Instagram size={16} className="mr-2" />

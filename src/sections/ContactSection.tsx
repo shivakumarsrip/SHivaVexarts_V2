@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Instagram, Globe, MapPin, Mail, CheckCircle, Loader2 } from "lucide-react";
+import { Instagram, Globe, MapPin, Mail, CheckCircle, Loader2, Palette } from "lucide-react";
 
 export default function ContactSection() {
   const [name, setName] = useState("");
@@ -19,6 +19,8 @@ export default function ContactSection() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
+  const { data: settings } = trpc.settings.getAll.useQuery();
 
   const contactMutation = trpc.contact.create.useMutation({
     onSuccess: () => {
@@ -35,6 +37,12 @@ export default function ContactSection() {
     e.preventDefault();
     if (!name || !email || !subject || !message) return;
     contactMutation.mutate({ name, email, subject, message });
+  };
+
+  const socials = settings?.socials || {
+    instagram: "https://www.instagram.com/shiva_vexarts",
+    behance: "https://www.behance.net/Sivadigitalart",
+    location: "Hyderabad, Telangana, India"
   };
 
   return (
@@ -73,7 +81,7 @@ export default function ContactSection() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
-                    className="bg-[#18181B] border-[#52525B] text-white placeholder:text-[#52525B] focus:border-[#F59E0B] focus:ring-[#F59E0B]/20 rounded-lg"
+                    className="bg-[#18181B] border-[#27272A] text-white placeholder:text-[#3F3F46] focus:border-[#F59E0B] focus:ring-[#F59E0B]/20 h-12 rounded-xl transition-all"
                     required
                   />
                 </div>
@@ -87,7 +95,7 @@ export default function ContactSection() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="bg-[#18181B] border-[#52525B] text-white placeholder:text-[#52525B] focus:border-[#F59E0B] focus:ring-[#F59E0B]/20 rounded-lg"
+                    className="bg-[#18181B] border-[#27272A] text-white placeholder:text-[#3F3F46] focus:border-[#F59E0B] focus:ring-[#F59E0B]/20 h-12 rounded-xl transition-all"
                     required
                   />
                 </div>
@@ -97,10 +105,10 @@ export default function ContactSection() {
                     Subject
                   </Label>
                   <Select value={subject} onValueChange={setSubject}>
-                    <SelectTrigger className="bg-[#18181B] border-[#52525B] text-white focus:border-[#F59E0B] focus:ring-[#F59E0B]/20 rounded-lg">
+                    <SelectTrigger className="bg-[#18181B] border-[#27272A] text-white focus:border-[#F59E0B] focus:ring-[#F59E0B]/20 h-12 rounded-xl transition-all">
                       <SelectValue placeholder="Select a subject" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#18181B] border-[#52525B]">
+                    <SelectContent className="bg-[#18181B] border-[#27272A] text-white">
                       <SelectItem value="Commission">Commission</SelectItem>
                       <SelectItem value="Collaboration">Collaboration</SelectItem>
                       <SelectItem value="Custom Art">Custom Art</SelectItem>
@@ -118,7 +126,7 @@ export default function ContactSection() {
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Tell me about your project..."
                     rows={5}
-                    className="bg-[#18181B] border-[#52525B] text-white placeholder:text-[#52525B] focus:border-[#F59E0B] focus:ring-[#F59E0B]/20 rounded-lg resize-none"
+                    className="bg-[#18181B] border-[#27272A] text-white placeholder:text-[#3F3F46] focus:border-[#F59E0B] focus:ring-[#F59E0B]/20 rounded-xl resize-none py-4 transition-all"
                     required
                   />
                 </div>
@@ -126,10 +134,10 @@ export default function ContactSection() {
                 <Button
                   type="submit"
                   disabled={contactMutation.isPending}
-                  className="w-full bg-[#F59E0B] text-[#09090B] hover:bg-[#D97706] font-body font-semibold rounded-lg py-6 text-[14px]"
+                  className="w-full bg-[#F59E0B] text-[#09090B] hover:bg-[#D97706] font-body font-bold rounded-xl h-14 text-[15px] shadow-[0_8px_20px_rgba(245,158,11,0.2)] transition-all active:scale-[0.98]"
                 >
                   {contactMutation.isPending ? (
-                    <Loader2 size={16} className="animate-spin mr-2" />
+                    <Loader2 size={18} className="animate-spin mr-2" />
                   ) : null}
                   Send Message
                 </Button>
@@ -138,70 +146,71 @@ export default function ContactSection() {
           </div>
 
           {/* Right - Info */}
-          <div className="lg:pl-8">
-            <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Instagram size={18} className="text-[#F59E0B]" />
+          <div className="lg:pl-8 flex flex-col justify-center">
+            <div className="space-y-8">
+              <div className="flex items-start gap-5">
+                <div className="w-12 h-12 bg-[#18181B] border border-[#27272A] rounded-xl flex items-center justify-center flex-shrink-0 text-[#E1306C]">
+                  <Instagram size={22} />
                 </div>
                 <div>
-                  <h4 className="font-body text-[14px] font-medium text-white mb-1">Instagram</h4>
+                  <h4 className="font-body text-[14px] font-bold text-white mb-1 uppercase tracking-wider">Instagram</h4>
                   <a
-                    href="https://www.instagram.com/shiva_vexarts"
+                    href={socials.instagram.startsWith('@') ? `https://instagram.com/${socials.instagram.substring(1)}` : socials.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-body text-[14px] text-[#A1A1AA] hover:text-[#F59E0B] transition-colors"
+                    className="font-body text-[15px] text-[#A1A1AA] hover:text-[#F59E0B] transition-colors"
                   >
-                    @shiva_vexarts
+                    {socials.instagram.includes('/') ? socials.instagram.split('/').pop() : socials.instagram}
                   </a>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Globe size={18} className="text-[#F59E0B]" />
+              <div className="flex items-start gap-5">
+                <div className="w-12 h-12 bg-[#18181B] border border-[#27272A] rounded-xl flex items-center justify-center flex-shrink-0 text-[#053EFF]">
+                  <Palette size={22} />
                 </div>
                 <div>
-                  <h4 className="font-body text-[14px] font-medium text-white mb-1">Behance</h4>
+                  <h4 className="font-body text-[14px] font-bold text-white mb-1 uppercase tracking-wider">Behance</h4>
                   <a
-                    href="https://www.behance.net/Sivadigitalart"
+                    href={socials.behance.startsWith('http') ? socials.behance : `https://${socials.behance}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-body text-[14px] text-[#A1A1AA] hover:text-[#F59E0B] transition-colors"
+                    className="font-body text-[15px] text-[#A1A1AA] hover:text-[#F59E0B] transition-colors"
                   >
-                    behance.net/Sivadigitalart
+                    {socials.behance.replace('https://', '').replace('www.', '')}
                   </a>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <MapPin size={18} className="text-[#F59E0B]" />
+              <div className="flex items-start gap-5">
+                <div className="w-12 h-12 bg-[#18181B] border border-[#27272A] rounded-xl flex items-center justify-center flex-shrink-0 text-[#F59E0B]">
+                  <MapPin size={22} />
                 </div>
                 <div>
-                  <h4 className="font-body text-[14px] font-medium text-white mb-1">Location</h4>
-                  <p className="font-body text-[14px] text-[#A1A1AA]">
-                    Hyderabad, Telangana, India
+                  <h4 className="font-body text-[14px] font-bold text-white mb-1 uppercase tracking-wider">Location</h4>
+                  <p className="font-body text-[15px] text-[#A1A1AA]">
+                    {socials.location}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Mail size={18} className="text-[#F59E0B]" />
+              <div className="flex items-start gap-5">
+                <div className="w-12 h-12 bg-[#18181B] border border-[#27272A] rounded-xl flex items-center justify-center flex-shrink-0 text-amber-500">
+                  <Mail size={22} />
                 </div>
                 <div>
-                  <h4 className="font-body text-[14px] font-medium text-white mb-1">Email</h4>
-                  <p className="font-body text-[14px] text-[#A1A1AA]">
+                  <h4 className="font-body text-[14px] font-bold text-white mb-1 uppercase tracking-wider">Email</h4>
+                  <p className="font-body text-[15px] text-[#A1A1AA]">
                     Available on request via contact form
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 p-4 bg-[#18181B] rounded-xl border border-[#27272A]">
-              <p className="font-body text-[13px] text-[#A1A1AA]">
-                I typically respond within <span className="text-[#F59E0B]">24-48 hours</span>.
+            <div className="mt-12 p-6 bg-[#18181B]/50 border border-[#27272A] rounded-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-[#F59E0B]/5 rounded-full blur-2xl -mr-12 -mt-12" />
+              <p className="font-body text-[14px] text-[#A1A1AA] leading-relaxed relative z-10">
+                I typically respond within <span className="text-[#F59E0B] font-bold">24-48 hours</span>.
                 For urgent inquiries, please reach out via Instagram direct message.
               </p>
             </div>

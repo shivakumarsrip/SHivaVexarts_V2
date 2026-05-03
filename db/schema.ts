@@ -155,3 +155,16 @@ export const contacts = pgTable(
 
 export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = typeof contacts.$inferInsert;
+// ─── Site Settings ────────────────────────────────────────────────────────
+
+export const siteSettings = pgTable("site_settings", {
+  key: varchar("key", { length: 100 }).primaryKey(),
+  value: text("value").notNull(), // JSON string
+  updatedAt: timestamp("updatedAt")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+export type SiteSetting = typeof siteSettings.$inferSelect;
+export type InsertSiteSetting = typeof siteSettings.$inferInsert;

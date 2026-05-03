@@ -1,10 +1,14 @@
-import { Link } from "react-router";
+import { trpc } from "@/providers/trpc";
 
 export default function Footer() {
+  const { data: settings } = trpc.settings.getAll.useQuery();
+  
   const scrollTo = (id: string) => {
     const el = document.querySelector(id);
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
+
+  const artistName = settings?.about?.name || "Shivakumar S";
 
   return (
     <footer className="bg-[#09090B] border-t border-[#27272A] relative z-10">
@@ -44,7 +48,7 @@ export default function Footer() {
 
           <div className="text-center md:text-right">
             <p className="font-body text-[13px] text-[#52525B] uppercase tracking-wider">
-              Digital Canvas by <span className="text-[#F59E0B]/70">Shivakumar S</span>
+              Digital Canvas by <span className="text-[#F59E0B]/70">{artistName}</span>
             </p>
           </div>
         </div>

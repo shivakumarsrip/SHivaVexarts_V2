@@ -31,8 +31,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Shield, ShoppingBag, MessageSquare, ArrowLeft, Image as ImageIcon, Edit2, LayoutDashboard, Plus, Upload, X, CheckCircle2, LayoutGrid, List, Search } from "lucide-react";
+import { Loader2, Shield, ShoppingBag, MessageSquare, ArrowLeft, Image as ImageIcon, Edit2, LayoutDashboard, Plus, Upload, X, CheckCircle2, LayoutGrid, List, Search, Settings, User, Globe, Cpu, Instagram, Palette, Monitor, Clapperboard, Trash2, Save } from "lucide-react";
+import { toast } from "sonner";
 import { getArtworkImageFallback } from "@/lib/artwork-images";
+import { Textarea } from "@/components/ui/textarea";
 
 const statusColors = {
   pending: "bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/20",
@@ -50,6 +52,7 @@ export default function AdminDashboard() {
   const isAdmin = user?.role === "admin";
   const utils = trpc.useUtils();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const profileImageInputRef = useRef<HTMLInputElement>(null);
 
   const [editingArtwork, setEditingArtwork] = useState<any | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -61,6 +64,7 @@ export default function AdminDashboard() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("inventory");
+  const [settingsForm, setSettingsForm] = useState<any>({});
 
   // Upload state
   const [uploading, setUploading] = useState(false);
@@ -83,6 +87,22 @@ export default function AdminDashboard() {
 
   const { data: contactsData, isLoading: contactsLoading } = trpc.contact.list.useQuery({ limit: 1000 }, {
     enabled: isAdmin,
+  });
+
+  const { data: settingsData, isLoading: settingsLoading } = trpc.settings.getAll.useQuery(undefined, {
+    enabled: isAdmin,
+  });
+
+  useEffect(() => {
+    if (settingsData) {
+      setSettingsForm(settingsData);
+    }
+  }, [settingsData]);
+
+  const updateSettingMutation = trpc.settings.update.useMutation({
+    onSuccess: () => {
+      utils.settings.getAll.invalidate();
+    },
   });
 
   const allArtworks = artworksData?.items || [];
@@ -146,6 +166,56 @@ export default function AdminDashboard() {
       utils.order.list.invalidate();
     },
   });
+
+  const handleSaveSetting = (key: string, value: any) => {
+    updateSettingMutation.mutate({ key, value }, {
+      onSuccess: () => {
+        toast.success(`Updated ${key} successfully!`, {
+          icon: <CheckCircle2 className="w-4 h-4 text-green-500" />,
+        });
+      },
+      onError: (err) => {
+        toast.error(`Failed to update ${key}: ${err.message}`);
+      }
+    });
+  };
+
+  const saveAllSettings = () => {
+    Object.entries(settingsForm).forEach(([key, value]) => {
+      updateSettingMutation.mutate({ key, value });
+    });
+    toast.success("All settings saved successfully!", {
+      description: "Your site content has been updated.",
+      icon: <CheckCircle2 className="w-4 h-4 text-green-500" />,
+    });
+  };
+
+  const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        const currentAbout = settingsForm.about || {};
+        const updatedAbout = { ...currentAbout, image: data.url };
+        handleSaveSetting("about", updatedAbout);
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const resetForm = () => {
     setIsAddingNew(false);
@@ -314,6 +384,13 @@ export default function AdminDashboard() {
               >
                 <MessageSquare size={16} className="mr-2" />
                 Messages
+              </TabsTrigger>
+              <TabsTrigger 
+                value="settings" 
+                className="px-6 h-full rounded-lg font-body font-bold text-[14px] text-[#A1A1AA] hover:text-white data-[state=active]:bg-[#F59E0B] data-[state=active]:text-[#09090B] transition-all"
+              >
+                <Settings size={16} className="mr-2" />
+                Settings
               </TabsTrigger>
             </TabsList>
 
@@ -571,6 +648,306 @@ export default function AdminDashboard() {
               <div className="flex flex-col items-center justify-center py-32 bg-[#18181B] rounded-2xl border border-[#27272A]">
                 <Search size={48} className="text-[#27272A] mb-4" />
                 <p className="text-[#71717A] font-body text-[16px]">No messages found for "<span className="text-white">{searchQuery}</span>"</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-0">
+            {settingsLoading ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <div className="w-12 h-12 border-4 border-[#F59E0B]/20 border-t-[#F59E0B] rounded-full animate-spin" />
+                <p className="text-[#71717A] font-body text-[14px]">Loading system settings...</p>
+              </div>
+            ) : (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-[#18181B] border border-[#27272A] p-6 rounded-2xl shadow-xl">
+                  <div>
+                    <h2 className="font-display text-[24px] text-white">Site Settings</h2>
+                    <p className="text-[#71717A] text-[13px]">Manage profile, social presence and experience timeline</p>
+                  </div>
+                  <Button 
+                    onClick={saveAllSettings}
+                    disabled={updateSettingMutation.isPending}
+                    className="bg-[#F59E0B] text-[#09090B] hover:bg-[#D97706] font-body font-bold rounded-xl h-12 px-8 shadow-lg shadow-[#F59E0B]/10"
+                  >
+                    {updateSettingMutation.isPending ? <Loader2 className="animate-spin mr-2" size={18} /> : <Save className="mr-2" size={18} />}
+                    Save All Changes
+                  </Button>
+                </div>
+
+                {/* About Management */}
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                  <div className="xl:col-span-2 space-y-6">
+                    <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-8 overflow-hidden relative">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-[#F59E0B]/5 rounded-full blur-3xl -mr-16 -mt-16" />
+                      
+                      <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center text-[#F59E0B]">
+                          <User size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-[20px] text-white">About Profile</h3>
+                          <p className="text-[#71717A] text-[13px]">Manage your personal bio and public profile photo</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-3">
+                            <Label className="text-[#A1A1AA] text-[12px] font-bold uppercase tracking-wider pl-1">Full Name</Label>
+                            <Input 
+                              value={settingsForm.about?.name || ""}
+                              onChange={(e) => setSettingsForm({ ...settingsForm, about: { ...settingsForm.about, name: e.target.value }})}
+                              onBlur={() => handleSaveSetting("about", settingsForm.about)}
+                              placeholder="Artist Name"
+                              className="bg-[#09090B] border-[#27272A] text-white h-12 rounded-xl focus:ring-[#F59E0B]/20 focus:border-[#F59E0B]"
+                            />
+                          </div>
+                          <div className="space-y-3">
+                            <Label className="text-[#A1A1AA] text-[12px] font-bold uppercase tracking-wider pl-1">Occupation</Label>
+                            <Input 
+                              value={settingsForm.about?.occupation || ""}
+                              onChange={(e) => setSettingsForm({ ...settingsForm, about: { ...settingsForm.about, occupation: e.target.value }})}
+                              onBlur={() => handleSaveSetting("about", settingsForm.about)}
+                              placeholder="Digital Artist"
+                              className="bg-[#09090B] border-[#27272A] text-white h-12 rounded-xl focus:ring-[#F59E0B]/20 focus:border-[#F59E0B]"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <Label className="text-[#A1A1AA] text-[12px] font-bold uppercase tracking-wider pl-1">Bio / Introduction</Label>
+                          <Textarea 
+                            value={settingsForm.about?.bio || ""}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, about: { ...settingsForm.about, bio: e.target.value }})}
+                            onBlur={() => handleSaveSetting("about", settingsForm.about)}
+                            placeholder="Tell the world about yourself..."
+                            className="bg-[#09090B] border-[#27272A] text-white min-h-[150px] rounded-xl focus:ring-[#F59E0B]/20 focus:border-[#F59E0B] resize-none py-4"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tools Management */}
+                    <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-8 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-[#F59E0B]/5 rounded-full blur-3xl -mr-16 -mt-16" />
+                      
+                      <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center text-[#F59E0B]">
+                          <Cpu size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-[20px] text-white">Design Stack</h3>
+                          <p className="text-[#71717A] text-[13px]">List the software and tools you use (comma separated)</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div className="space-y-3">
+                          <Label className="text-[#A1A1AA] text-[12px] font-bold uppercase tracking-wider pl-1">Tools & Software</Label>
+                          <Textarea 
+                            value={settingsForm.about?.tools?.join(", ") || ""}
+                            onChange={(e) => {
+                              const tools = e.target.value.split(",").map(t => t.trim()).filter(Boolean);
+                              setSettingsForm({ ...settingsForm, about: { ...settingsForm.about, tools }});
+                            }}
+                            onBlur={() => handleSaveSetting("about", settingsForm.about)}
+                            placeholder="Photoshop, Illustrator, Blender..."
+                            className="bg-[#09090B] border-[#27272A] text-white rounded-xl focus:ring-[#F59E0B]/20 focus:border-[#F59E0B] resize-none h-24"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-8">
+                    {/* Profile Image */}
+                    <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-8 flex flex-col items-center text-center">
+                      <Label className="text-[#A1A1AA] text-[12px] font-bold uppercase tracking-wider mb-6 block w-full text-left pl-1">Profile Photo</Label>
+                      
+                      <div className="relative group">
+                        <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-[#27272A] bg-[#09090B] relative transition-all group-hover:border-[#F59E0B]/30">
+                          {settingsForm.about?.image ? (
+                            <img src={settingsForm.about.image} className="w-full h-full object-cover" alt="Profile" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[#3F3F46]">
+                              <User size={64} />
+                            </div>
+                          )}
+                          
+                          <div 
+                            onClick={() => profileImageInputRef.current?.click()}
+                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-all gap-2"
+                          >
+                            <Upload size={24} className="text-white" />
+                            <span className="text-white text-[11px] font-bold uppercase tracking-widest">Replace</span>
+                          </div>
+                        </div>
+                        
+                        {uploading && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+                            <Loader2 size={32} className="text-[#F59E0B] animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <input 
+                        type="file" 
+                        ref={profileImageInputRef} 
+                        onChange={handleProfileImageUpload} 
+                        className="hidden" 
+                        accept="image/*"
+                      />
+                      
+                      <p className="mt-6 text-[#71717A] text-[13px] px-4 italic leading-relaxed">
+                        This image appears on your About section and public profile.
+                      </p>
+                    </div>
+
+                    {/* Socials & Location */}
+                    <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-8 space-y-6">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center text-[#F59E0B]">
+                          <Globe size={20} />
+                        </div>
+                        <h3 className="font-display text-[20px] text-white">Social Presence</h3>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-[#A1A1AA] text-[11px] font-bold uppercase tracking-wider mb-1">
+                            <Instagram size={14} className="text-[#E1306C]" />
+                            <span>Instagram</span>
+                          </div>
+                          <Input 
+                            value={settingsForm.socials?.instagram || ""}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, socials: { ...settingsForm.socials, instagram: e.target.value }})}
+                            onBlur={() => handleSaveSetting("socials", settingsForm.socials)}
+                            placeholder="@username"
+                            className="bg-[#09090B] border-[#27272A] text-white h-11 rounded-xl focus:ring-[#F59E0B]/20"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-[#A1A1AA] text-[11px] font-bold uppercase tracking-wider mb-1">
+                            <Palette size={14} className="text-[#053EFF]" />
+                            <span>Behance</span>
+                          </div>
+                          <Input 
+                            value={settingsForm.socials?.behance || ""}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, socials: { ...settingsForm.socials, behance: e.target.value }})}
+                            onBlur={() => handleSaveSetting("socials", settingsForm.socials)}
+                            placeholder="behance.net/username"
+                            className="bg-[#09090B] border-[#27272A] text-white h-11 rounded-xl focus:ring-[#F59E0B]/20"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-[#A1A1AA] text-[11px] font-bold uppercase tracking-wider mb-1">
+                            <Globe size={14} className="text-[#F59E0B]" />
+                            <span>Location</span>
+                          </div>
+                          <Input 
+                            value={settingsForm.socials?.location || ""}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, socials: { ...settingsForm.socials, location: e.target.value }})}
+                            onBlur={() => handleSaveSetting("socials", settingsForm.socials)}
+                            placeholder="City, Country"
+                            className="bg-[#09090B] border-[#27272A] text-white h-11 rounded-xl focus:ring-[#F59E0B]/20"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Experience Management */}
+                <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-8 relative overflow-hidden">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center text-[#F59E0B]">
+                        <Clapperboard size={20} />
+                      </div>
+                      <div>
+                        <h3 className="font-display text-[22px] text-white">Professional Journey</h3>
+                        <p className="text-[#71717A] text-[13px]">Track and showcase your career milestones</p>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        const experience = [...(settingsForm.experience || []), { year: "", title: "", company: "" }];
+                        setSettingsForm({ ...settingsForm, experience });
+                      }}
+                      className="bg-[#F59E0B]/10 text-[#F59E0B] hover:bg-[#F59E0B] hover:text-[#09090B] border-none rounded-xl px-6"
+                    >
+                      <Plus size={18} className="mr-2" />
+                      Add Milestone
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {(settingsForm.experience || []).map((exp: any, index: number) => (
+                      <div key={index} className="bg-[#09090B] border border-[#27272A] rounded-2xl p-6 relative group transition-all hover:border-[#F59E0B]/30 hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]">
+                        <button 
+                          onClick={() => {
+                            const experience = settingsForm.experience.filter((_: any, i: number) => i !== index);
+                            setSettingsForm({ ...settingsForm, experience });
+                            handleSaveSetting("experience", experience);
+                          }}
+                          className="absolute top-4 right-4 text-[#3F3F46] hover:text-[#DC2626] transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label className="text-[#71717A] text-[10px] font-bold uppercase tracking-widest">Year</Label>
+                            <Input 
+                              value={exp.year}
+                              onChange={(e) => {
+                                const experience = [...settingsForm.experience];
+                                experience[index].year = e.target.value;
+                                setSettingsForm({ ...settingsForm, experience });
+                              }}
+                              onBlur={() => handleSaveSetting("experience", settingsForm.experience)}
+                              placeholder="2023"
+                              className="bg-[#18181B] border-[#27272A] text-white h-10 rounded-lg text-[13px] font-bold"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-[#71717A] text-[10px] font-bold uppercase tracking-widest">Title</Label>
+                            <Input 
+                              value={exp.title}
+                              onChange={(e) => {
+                                const experience = [...settingsForm.experience];
+                                experience[index].title = e.target.value;
+                                setSettingsForm({ ...settingsForm, experience });
+                              }}
+                              onBlur={() => handleSaveSetting("experience", settingsForm.experience)}
+                              placeholder="Senior Artist"
+                              className="bg-[#18181B] border-[#27272A] text-white h-10 rounded-lg text-[13px]"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-[#71717A] text-[10px] font-bold uppercase tracking-widest">Organization</Label>
+                            <Input 
+                              value={exp.company}
+                              onChange={(e) => {
+                                const experience = [...settingsForm.experience];
+                                experience[index].company = e.target.value;
+                                setSettingsForm({ ...settingsForm, experience });
+                              }}
+                              onBlur={() => handleSaveSetting("experience", settingsForm.experience)}
+                              placeholder="Studio Name"
+                              className="bg-[#18181B] border-[#27272A] text-white h-10 rounded-lg text-[13px]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </TabsContent>
