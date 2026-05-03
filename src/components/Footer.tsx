@@ -24,7 +24,7 @@ export default function Footer() {
               onClick={() => scrollTo("#gallery")}
               className="font-body text-[13px] font-bold uppercase tracking-widest text-[#A1A1AA] hover:text-[#F59E0B] transition-colors"
             >
-              Gallery
+              Shop Artworks
             </button>
             <span className="hidden sm:inline text-[#27272A]">/</span>
             <button
