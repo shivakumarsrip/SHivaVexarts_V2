@@ -69,15 +69,18 @@ app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;
 
-// Only start Node.js server in self-hosted production (not Vercel)
-if (env.isProduction && !process.env.VERCEL) {
-  const { serve } = await import("@hono/node-server");
-  const { serveStaticFiles } = await import("./lib/vite");
-  serveStaticFiles(app);
+// Only start Node.js server in self-hosted production (not Vercel/Netlify)
+if (env.isProduction && !process.env.VERCEL && !process.env.NETLIFY) {
+  (async () => {
+    const { serve } = await import("@hono/node-server");
+    const { serveStaticFiles } = await import("./lib/vite");
+    serveStaticFiles(app);
 
-  const port = parseInt(process.env.PORT || "3000");
-  serve({ fetch: app.fetch, port }, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-  });
+    const port = parseInt(process.env.PORT || "3000");
+    serve({ fetch: app.fetch, port }, () => {
+      console.log(`Server running on http://localhost:${port}/`);
+    });
+  })();
 }
+
 
