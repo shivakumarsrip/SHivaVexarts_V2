@@ -12,6 +12,7 @@ export function getDb() {
   if (!instance) {
     const queryClient = postgres(env.databaseUrl, {
       prepare: false,
+      idle_timeout: 1, // Close connection after 1s of inactivity to prevent AWS Lambda timeouts
     });
     instance = drizzle(queryClient, {
       schema: fullSchema,
