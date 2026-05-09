@@ -10,7 +10,9 @@ let instance: ReturnType<typeof drizzle<typeof fullSchema>>;
 
 export function getDb() {
   if (!instance) {
-    const queryClient = postgres(env.databaseUrl);
+    const queryClient = postgres(env.databaseUrl, {
+      prepare: false,
+    });
     instance = drizzle(queryClient, {
       schema: fullSchema,
     });
