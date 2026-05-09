@@ -69,7 +69,8 @@ app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;
 
-if (env.isProduction) {
+// Only start Node.js server in self-hosted production (not Vercel)
+if (env.isProduction && !process.env.VERCEL) {
   const { serve } = await import("@hono/node-server");
   const { serveStaticFiles } = await import("./lib/vite");
   serveStaticFiles(app);
@@ -79,3 +80,4 @@ if (env.isProduction) {
     console.log(`Server running on http://localhost:${port}/`);
   });
 }
+
