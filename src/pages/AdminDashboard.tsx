@@ -469,7 +469,10 @@ export default function AdminDashboard() {
                                 className="w-full h-full object-cover"
                                 alt=""
                                 onError={(event) => {
-                                  event.currentTarget.src = getArtworkImageFallback(artwork.imageUrl);
+                                  const el = event.currentTarget;
+                                  if (el.dataset.fallback) return; // prevent infinite loop
+                                  el.dataset.fallback = "true";
+                                  el.src = getArtworkImageFallback(artwork.imageUrl);
                                 }}
                               />
                             </div>
@@ -514,7 +517,10 @@ export default function AdminDashboard() {
                         className="w-full h-full object-cover scale-[1.02] transition-transform duration-700 ease-out group-hover:scale-110 will-change-transform transform-gpu" 
                         alt={artwork.title} 
                         onError={(event) => {
-                          event.currentTarget.src = getArtworkImageFallback(artwork.imageUrl);
+                          const el = event.currentTarget;
+                          if (el.dataset.fallback) return; // prevent infinite loop
+                          el.dataset.fallback = "true";
+                          el.src = getArtworkImageFallback(artwork.imageUrl);
                         }}
                       />
                       

@@ -66,9 +66,11 @@ export default function ArtworkCard({ artwork, featured = false }: ArtworkCardPr
             alt={artwork.title}
             loading="lazy"
             onLoad={() => setImageLoaded(true)}
-            onError={() => {
-              setFailedImage(artwork.imageUrl);
-              setImageLoaded(false);
+            onError={(e) => {
+              if (!failedImage) {
+                setFailedImage(artwork.imageUrl);
+              }
+              // Don't reset imageLoaded — prevents blink/flicker
             }}
             className={`w-full h-full object-cover transition-all duration-700 ${
               imageLoaded ? "opacity-100 scale-100 blur-0" : "opacity-0 scale-105 blur-lg"

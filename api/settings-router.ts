@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { createRouter, publicQuery, adminQuery } from "./middleware";
+import { getDb } from "./queries/connection";
 import { siteSettings } from "../db/schema";
 import { eq } from "drizzle-orm";
 
 export const settingsRouter = createRouter({
-  getAll: publicQuery.query(async ({ ctx }) => {
-    const results = await ctx.db.select().from(siteSettings);
+  getAll: publicQuery.query(async () => {
+    const db = getDb();
+    const results = await db.select().from(siteSettings);
     // Convert to a record for easier usage
     const settings: Record<string, any> = {};
     results.forEach((row) => {
@@ -25,10 +27,11 @@ export const settingsRouter = createRouter({
         value: z.any(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
+      const db = getDb();
       const jsonValue = JSON.stringify(input.value);
       
-      await ctx.db
+      await db
         .insert(siteSettings)
         .values({
           key: input.key,
