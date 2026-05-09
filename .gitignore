@@ -39,3 +39,8 @@ build/
 # Test coverage
 coverage/
 .nyc_output/
+# Scratch/debug files
+scratch/
+dev-server.*
+# Netlify
+.netlify/
